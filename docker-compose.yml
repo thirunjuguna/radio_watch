@@ -1,0 +1,33 @@
+version: '3'
+services:
+  db:
+    image: postgres:9.6.2-alpine
+    env_file:
+      - .env
+    volumes:
+      - ./tmp/db:/var/lib/postgresql/data
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+  sidekiq:
+    build: .
+    command: bundle exec sidekiq
+    volumes:
+      - .:/usr/src/app
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - .env
+  web:
+    build: .
+    command: bundle exec rails s -p 3001 -b '0.0.0.0'
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - "3000:3000"
+    links:
+      - db
+    env_file:
+      - .env
